@@ -98,7 +98,6 @@ public class Container implements ContainerBase {
 				output = client.getOutputStream();
 				
 				// clasa Request care primeste "input" ca stream de citire
-				//parseRequest();
 				
 				Request request = new Request(input);
 				request.parse();
