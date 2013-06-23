@@ -1,7 +1,7 @@
 
 import java.io.IOException;
 import java.io.InputStream;
-import javax.servlet.http.*;
+
 
 public class Request implements RequestBase{
 	private InputStream input;
