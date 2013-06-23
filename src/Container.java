@@ -25,7 +25,6 @@ public class Container implements ContainerBase {
 		try{
 			start();
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
@@ -71,10 +70,7 @@ public class Container implements ContainerBase {
 
 	}
 	
-	public static void main(String[] Args){
-		Container MyServletContainer = new Container(8025);
-		MyServletContainer.start();
-	}
+	
 	
 	@Override
 	public void start() {
@@ -102,7 +98,15 @@ public class Container implements ContainerBase {
 				Request request = new Request(input);
 				request.parse();
 				
-				output.write((byte)'h');
+				// Should generate Response here
+				// Create Response class and populate in request for processing
+				
+				Response response = new Response(output);
+				response.setRequest(request);
+				response.sendStaticResponse();
+				
+				// write something to stream: it should be a http header+TEXT
+				//output.write((byte)'h');
 				
 			}catch(IOException e){
 				System.out.println(e);
@@ -118,5 +122,12 @@ public class Container implements ContainerBase {
 					
 			}*/
 		}
+		
+		
+	}
+	
+	public static void main(String[] Args){
+		Container MyServletContainer = new Container(8025);
+		MyServletContainer.start();
 	}
 }
