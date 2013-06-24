@@ -33,7 +33,7 @@ public class Request implements RequestBase{
 		// Show the request in console for debugging
 		System.out.println(request.toString());
 		// Parse the request and get the URL
-		parseUri(request.toString());
+		this.uri = parseUri(request.toString());
 	}
 	
 	@Override

@@ -1,3 +1,4 @@
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -7,8 +8,10 @@ import java.net.Socket;
 
 
 
+
+
 public class Container implements ContainerBase {
-	
+	public static String AppPath = System.getProperty("user.dir") + File.separator + "Apps"; // Get user working directory + Resources folder
 	private ServerSocket MyServer;
 	private int PortNumber;
 	private boolean shutdown = false;
@@ -16,6 +19,7 @@ public class Container implements ContainerBase {
 	
 	public Container (int port){
 		this.PortNumber = port;
+		System.out.println(AppPath);
 	}
 	@Override
 	public void initialize(int port) {
@@ -103,11 +107,25 @@ public class Container implements ContainerBase {
 				
 				Response response = new Response(output);
 				response.setRequest(request);
+				
+				// TODO Determine if this is a static file (http://myserver.com:port/filename) or a servlet path (http://myserver.com:port/servlet/servletName)
+				
+				/* processRequest(request.getUri) -> Static | Servlet -> send appropriate response
+				 * if (type == RequestType.Static)
+				 * 		response.sendStaticResponse();
+				 * else {
+				 * 		  instantiate servlet class => a kind of Factory based on Servlet name 
+				 * 		  something like: Class servlet = ServletFactory.getInstance('testServlet');
+				 * 		  servlet.init();
+				 *		  servlet.service(); -> doGet | doPost
+				 *		  servlet.destroy();
+				 * }
+				 */
 				response.sendStaticResponse();
 				
 				// write something to stream: it should be a http header+TEXT
 				//output.write((byte)'h');
-				
+				client.close();
 			}catch(IOException e){
 				System.out.println(e);
 				System.exit(1);
