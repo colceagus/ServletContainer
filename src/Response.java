@@ -47,7 +47,7 @@ public class Response implements ResponseBase {
 			 }
 			
 		}catch (IOException e){
-			e.printStackTrace();
+			System.out.println(e);
 		}finally { 
 			if (fis!=null) 
 				fis.close(); 

@@ -23,7 +23,7 @@ public class Request implements RequestBase{
 			// the index returns the position at which the stream has read 
 			index = input.read(buffer);
 		}catch(IOException e){
-			e.printStackTrace();
+			System.out.println(e);
 			index = -1;
 		}
 		// Append each character read to the request

@@ -11,9 +11,14 @@ import java.net.Socket;
 
 
 public class Container implements ContainerBase {
+	
 	public static String AppPath = System.getProperty("user.dir") + File.separator + "Apps"; // Get user working directory + Resources folder
+	private static final int maxConnections = 10;
+	private clientThread threads[] = new clientThread[maxConnections];
+	
 	private ServerSocket MyServer;
-	private int PortNumber;
+	private Socket clientSocket;
+	private int PortNumber = 8025;
 	private boolean shutdown = false;
 	
 	
@@ -29,52 +34,10 @@ public class Container implements ContainerBase {
 		try{
 			start();
 		} catch (Exception e) {
-			e.printStackTrace();
+			System.out.println(e);
 		}
 	}
 
-	
-
-	@Override
-	public ResponseType parseRequest() {
-		/*StringBuffer request = new StringBuffer(2048);
-		byte[] buffer = new byte[2048];
-		
-		// the buffer index: until where it was written when the read method was appealed
-		int index;
-		
-		try {
-			index = input.read(buffer);
-		}catch(IOException e){
-			e.printStackTrace();
-			index = -1;
-		}
-		
-		for (int j = 0; j < index; j++){
-			request.append((char) buffer[j]);
-		}
-		int typeIndex = request.indexOf(' ',0);
-		if (typeIndex != -1){
-			System.out.println(request.substring(0, typeIndex));
-			return ResponseType.Servlet;
-		}
-		System.out.println(request.toString());*/
-		return null;
-	}
-
-	@Override
-	public Response processResponse() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public void shutdown() {
-		// TODO Auto-generated method stub
-
-	}
-	
-	
 	
 	@Override
 	public void start() {
@@ -82,20 +45,50 @@ public class Container implements ContainerBase {
 			MyServer = new ServerSocket(PortNumber, 1, InetAddress.getByName("127.0.0.1"));
 			//Socket client = new Socket("127.0.0.1", PortNumber);
 		}catch (Exception e){
-			e.printStackTrace();
+			System.out.println(e);
 		}
 		
 		
 		while (!shutdown){
-			Socket client = null;
+			clientSocket = null;
 			InputStream input = null;
 			OutputStream output = null;
-			
+			int i = 0;
 			try {
-				client = MyServer.accept();
-				input = client.getInputStream();
+				// listen for a connection
+				clientSocket = MyServer.accept(); 			
+				// Start in a separate thread the current request
 				
-				output = client.getOutputStream();
+				for (i = 0; i < maxConnections; i++ )
+					if (threads[i] == null){
+						(threads[i] = new clientThread(clientSocket, threads)).start();
+						break;
+					}
+				if (i == maxConnections) { 
+					// show 503 Service Unavailable; provide Retry-After
+					OutputStream os = clientSocket.getOutputStream();
+					String errorMessage = "HTTP/1.1 503 Service Unavailable\r\n" + 
+							  "Accept-Ranges: bytes\r\n"+
+							  "Content-Type: text/html\r\n" + 
+							  "Content-Length: 190\r\n" +
+							  "\r\n" +
+							  "<!DOCTYPE HTML PUBLIC '-//IETF//DTD HTML 2.0//EN'>\r\n<html><head>\r\n"+
+							  "<title>503 Service Unavailable</title>\r\n"+
+							  "</head><body>\r\n"+
+							  "<h1>Service Unavailable</h1>\r\n"+
+							  "<p>Server is busy.</p>\r\n"+
+							  "</body></html>"; 
+					os.write(errorMessage.getBytes());
+					os.flush();
+			        os.close();
+			        //clientSocket.shutdownOutput();
+			        //clientSocket.shutdownInput();
+			        clientSocket.close();
+				}
+				/*	
+				input = clientSocket.getInputStream();
+				
+				output = clientSocket.getOutputStream();
 				
 				// clasa Request care primeste "input" ca stream de citire
 				
@@ -120,28 +113,61 @@ public class Container implements ContainerBase {
 				 *		  servlet.service(); -> doGet | doPost
 				 *		  servlet.destroy();
 				 * }
-				 */
+				 *
 				response.sendStaticResponse();
 				
 				// write something to stream: it should be a http header+TEXT
 				//output.write((byte)'h');
-				client.close();
+				clientSocket.close(); */
 			}catch(IOException e){
 				System.out.println(e);
 				System.exit(1);
-			}/*finally{
+			}finally{
 				try {
-					input.close();
-					output.close();
-					client.close();
-				}catch (Exception e){
-					e.printStackTrace();
+					//threads[i-1] = null;
+				}catch(IndexOutOfBoundsException e){
+					System.out.println(e);
 				}
-					
-			}*/
+			}
 		}
 		
 		
+	}
+	@Override
+	public ResponseType parseRequest() {
+		/*StringBuffer request = new StringBuffer(2048);
+		byte[] buffer = new byte[2048];
+		
+		// the buffer index: until where it was written when the read method was appealed
+		int index;
+		
+		try {
+			index = input.read(buffer);
+		}catch(IOException e){
+			System.out.println(e);
+			index = -1;
+		}
+		
+		for (int j = 0; j < index; j++){
+			request.append((char) buffer[j]);
+		}
+		int typeIndex = request.indexOf(' ',0);
+		if (typeIndex != -1){
+			System.out.println(request.substring(0, typeIndex));
+			return ResponseType.Servlet;
+		}
+		System.out.println(request.toString());*/
+		return null;
+	}
+	@Override
+	public Response processResponse() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	@Override
+	public void shutdown() {
+		// TODO Auto-generated method stub
+
 	}
 	
 	public static void main(String[] Args){
