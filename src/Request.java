@@ -1,11 +1,13 @@
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 
 
 public class Request implements RequestBase{
 	private InputStream input;
-	private String uri;
+	private String uri = null;
 	private String httpMethod; // GET, POST
 	
 	public Request(InputStream input){
@@ -14,17 +16,20 @@ public class Request implements RequestBase{
 	
 	@Override
 	public void parse() {
- 
+		/*//new implementation
+		BufferedReader in = new BufferedReader(new InputStreamReader(input));
+		*/
 		StringBuffer request = new StringBuffer(2048); // Read into a StringBuffer for request retrieval
 		byte[] buffer = new byte[2048]; // The buffer is read and then appended to the StringBuffer for recompletion of the hole request string
 		int index; // the buffer index: until where it was written when the read method was appealed
-		
+		//String req; // the request line
 		try {
 			// the index returns the position at which the stream has read 
 			index = input.read(buffer);
 		}catch(IOException e){
 			System.out.println(e);
 			index = -1;
+			this.uri = null;
 		}
 		// Append each character read to the request
 		for (int j = 0; j < index; j++){

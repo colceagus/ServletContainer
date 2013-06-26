@@ -44,6 +44,8 @@ public class Response implements ResponseBase {
 						  "\r\n" +
 						  "<h1>File Not Found</h1>"; 
 				 output.write(errorMessage.getBytes()); 
+				 output.flush();
+				 
 			 }
 			
 		}catch (IOException e){

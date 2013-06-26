@@ -51,83 +51,63 @@ public class Container implements ContainerBase {
 		
 		while (!shutdown){
 			clientSocket = null;
-			InputStream input = null;
-			OutputStream output = null;
+			//InputStream input = null;
+			//OutputStream output = null;
 			int i = 0;
 			try {
 				// listen for a connection
+				
 				clientSocket = MyServer.accept(); 			
 				// Start in a separate thread the current request
-				
+				synchronized(this){
 				for (i = 0; i < maxConnections; i++ )
 					if (threads[i] == null){
 						(threads[i] = new clientThread(clientSocket, threads)).start();
 						break;
 					}
+				}
+				//synchronized(this){
 				if (i == maxConnections) { 
 					// show 503 Service Unavailable; provide Retry-After
+					synchronized (this){
 					OutputStream os = clientSocket.getOutputStream();
 					String errorMessage = "HTTP/1.1 503 Service Unavailable\r\n" + 
 							  "Accept-Ranges: bytes\r\n"+
 							  "Content-Type: text/html\r\n" + 
-							  "Content-Length: 190\r\n" +
+							  //"Content-Length: 155\r\n" +
 							  "\r\n" +
-							  "<!DOCTYPE HTML PUBLIC '-//IETF//DTD HTML 2.0//EN'>\r\n<html><head>\r\n"+
+							  "<!DOCTYPE HTML>\r\n<html><head>\r\n"+
 							  "<title>503 Service Unavailable</title>\r\n"+
 							  "</head><body>\r\n"+
 							  "<h1>Service Unavailable</h1>\r\n"+
 							  "<p>Server is busy.</p>\r\n"+
 							  "</body></html>"; 
+					
 					os.write(errorMessage.getBytes());
+					
 					os.flush();
-			        os.close();
+					}
+			        //os.close();
 			        //clientSocket.shutdownOutput();
 			        //clientSocket.shutdownInput();
-			        clientSocket.close();
+			        //clientSocket.close();
 				}
-				/*	
-				input = clientSocket.getInputStream();
-				
-				output = clientSocket.getOutputStream();
-				
-				// clasa Request care primeste "input" ca stream de citire
-				
-				Request request = new Request(input);
-				request.parse();
-				
-				// Should generate Response here
-				// Create Response class and populate in request for processing
-				
-				Response response = new Response(output);
-				response.setRequest(request);
-				
-				// TODO Determine if this is a static file (http://myserver.com:port/filename) or a servlet path (http://myserver.com:port/servlet/servletName)
-				
-				/* processRequest(request.getUri) -> Static | Servlet -> send appropriate response
-				 * if (type == RequestType.Static)
-				 * 		response.sendStaticResponse();
-				 * else {
-				 * 		  instantiate servlet class => a kind of Factory based on Servlet name 
-				 * 		  something like: Class servlet = ServletFactory.getInstance('testServlet');
-				 * 		  servlet.init();
-				 *		  servlet.service(); -> doGet | doPost
-				 *		  servlet.destroy();
-				 * }
-				 *
-				response.sendStaticResponse();
-				
-				// write something to stream: it should be a http header+TEXT
-				//output.write((byte)'h');
-				clientSocket.close(); */
+				//}
+				// ***
 			}catch(IOException e){
 				System.out.println(e);
-				System.exit(1);
+				//System.exit(1);
 			}finally{
 				try {
 					//threads[i-1] = null;
+					
+					//if (clientSocket.isClosed() == false && i == maxConnections)	
+						//clientSocket.close(); 
 				}catch(IndexOutOfBoundsException e){
 					System.out.println(e);
-				}
+				}/*catch(IOException e){
+					System.out.println(e);
+				}*/
 			}
 		}
 		

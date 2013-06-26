@@ -7,8 +7,8 @@ import java.net.Socket;
 public class clientThread extends Thread{
 	
 
-	private InputStream input;
-	private OutputStream output;
+	private InputStream input = null;
+	private OutputStream output = null;
 	
 	private final clientThread threads[]; // so that it does not get modified
 	private Socket client;
@@ -41,25 +41,40 @@ public class clientThread extends Thread{
 			response.setRequest(request);
 			
 			// TODO Determine if this is a static file (http://myserver.com:port/filename) or a servlet path (http://myserver.com:port/servlet/servletName)
-			
-			/* processRequest(request.getUri) -> Static | Servlet -> send appropriate response
-			 * if (type == RequestType.Static)
-			 * 		response.sendStaticResponse();
-			 * else {
-			 * 		  instantiate servlet class => a kind of Factory based on Servlet name 
-			 * 		  something like: Class servlet = ServletFactory.getInstance('testServlet');
-			 * 		  servlet.init();
-			 *		  servlet.service(); -> doGet | doPost
-			 *		  servlet.destroy();
-			 * }
-			 */
-			response.sendStaticResponse();
-			
+			try {
+				if (request.getUri() != null){
+					if (request.getUri().startsWith("/servlet/")){
+						System.out.println("I am a servlet!");
+						
+					}else{
+						
+						response.sendStaticResponse();
+					}
+					this.setName(request.getUri());
+				}
+			}catch (NullPointerException e){
+				System.out.println("Tried parsing a null string");
+			}
 			// write something to stream: it should be a http header+TEXT
 			//output.write((byte)'h');
-			client.close();
+			
 		}catch (IOException e){
 			System.out.println(e);
+		}catch (Exception e){
+			e.printStackTrace();
+		}finally{
+			try {
+				if (input != null)
+					input.close();
+				
+				if (output != null){
+					output.flush();
+					output.close();
+				}
+				client.close();
+			}catch(IOException e){
+				System.out.println(e);
+			}
 		}
 	}
 	
