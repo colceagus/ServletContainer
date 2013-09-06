@@ -17,6 +17,18 @@ public interface ContainerBase {
 	 */
 	public void initialize(int PortNumber);
 	
+	
+	/*
+	 * Read web.xml file and instantiates servlets
+	 * Default 'servlet' is for static resources
+	 * Rest of the servlet descriptors are for custom servlets.
+	 * The servlets are stored into the static class 'LOADER'.
+	 * 
+	 * 
+	 * @return void
+	 */
+	public void config();
+	
 	/*
 	 * Starts the Container as a Server for listening for requests 
 	 * @return void

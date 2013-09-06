@@ -6,7 +6,6 @@ import java.net.Socket;
 
 public class clientThread extends Thread{
 	
-
 	private InputStream input = null;
 	private OutputStream output = null;
 	
@@ -23,7 +22,7 @@ public class clientThread extends Thread{
 	
 	@Override
 	public void run() {
-		// TODO Auto-generated method stub
+	
 		super.run();
 		try {
 			input = client.getInputStream();
@@ -42,15 +41,23 @@ public class clientThread extends Thread{
 			
 			// TODO Determine if this is a static file (http://myserver.com:port/filename) or a servlet path (http://myserver.com:port/servlet/servletName)
 			try {
+				
 				if (request.getUri() != null){
 					if (request.getUri().startsWith("/servlet/")){
 						System.out.println("I am a servlet!");
-						
+						ServletProcessor srvp = new ServletProcessor();
+						srvp.process(request, response);
 					}else{
-						
-						response.sendStaticResponse();
+						// instantiate StaticProcessor
+						StaticProcessor sp = new StaticProcessor();
+						sp.process(request, response);
 					}
+					
 					this.setName(request.getUri());
+					
+					// call the garbage collection system
+					// for the remaining instances of StaticProcessor or ServletProcessor
+					System.gc();
 				}
 			}catch (NullPointerException e){
 				System.out.println("Tried parsing a null string");
@@ -77,6 +84,4 @@ public class clientThread extends Thread{
 			}
 		}
 	}
-	
-
 }

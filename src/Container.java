@@ -6,10 +6,6 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 
-
-
-
-
 public class Container implements ContainerBase {
 	
 	public static String AppPath = System.getProperty("user.dir") + File.separator + "Apps"; // Get user working directory + Resources folder
@@ -26,18 +22,32 @@ public class Container implements ContainerBase {
 		this.PortNumber = port;
 		System.out.println(AppPath);
 	}
+	
 	@Override
 	public void initialize(int port) {
 		// other initializations for further settings
 		this.PortNumber = port;
 		
 		try{
+			config();
 			start();
 		} catch (Exception e) {
 			System.out.println(e);
 		}
 	}
-
+	
+	@Override
+	public void config(){
+		/* Load the server.xml file
+		 * Start-up config for the server
+		 */
+		
+		/* Load the web.xml file
+		 * Load the servlets' config and start them up
+		 * 
+		 */
+		//LOADER.load('web.xml');
+	}
 	
 	@Override
 	public void start() {
@@ -60,38 +70,39 @@ public class Container implements ContainerBase {
 				clientSocket = MyServer.accept(); 			
 				// Start in a separate thread the current request
 				synchronized(this){
-				for (i = 0; i < maxConnections; i++ )
-					if (threads[i] == null){
-						(threads[i] = new clientThread(clientSocket, threads)).start();
-						break;
-					}
+					for (i = 0; i < maxConnections; i++ )
+						if (threads[i] == null){
+							(threads[i] = new clientThread(clientSocket, threads)).start();
+							break;
+						}
 				}
 				//synchronized(this){
 				if (i == maxConnections) { 
 					// show 503 Service Unavailable; provide Retry-After
 					synchronized (this){
-					OutputStream os = clientSocket.getOutputStream();
-					String errorMessage = "HTTP/1.1 503 Service Unavailable\r\n" + 
-							  "Accept-Ranges: bytes\r\n"+
-							  "Content-Type: text/html\r\n" + 
-							  //"Content-Length: 155\r\n" +
-							  "\r\n" +
-							  "<!DOCTYPE HTML>\r\n<html><head>\r\n"+
-							  "<title>503 Service Unavailable</title>\r\n"+
-							  "</head><body>\r\n"+
-							  "<h1>Service Unavailable</h1>\r\n"+
-							  "<p>Server is busy.</p>\r\n"+
-							  "</body></html>"; 
+						OutputStream os = clientSocket.getOutputStream();
+						String errorMessage = "HTTP/1.1 503 Service Unavailable\r\n" + 
+								  "Accept-Ranges: bytes\r\n"+
+								  "Content-Type: text/html\r\n" + 
+								  //"Content-Length: 155\r\n" +
+								  "\r\n" +
+								  "<!DOCTYPE HTML>\r\n<html><head>\r\n"+
+								  "<title>503 Service Unavailable</title>\r\n"+
+								  "</head><body>\r\n"+
+								  "<h1>Service Unavailable</h1>\r\n"+
+								  "<p>Server is busy.</p>\r\n"+
+								  "</body></html>"; 
 					
-					os.write(errorMessage.getBytes());
-					
-					os.flush();
+						os.write(errorMessage.getBytes());
+						
+						os.flush();
 					}
 			        //os.close();
 			        //clientSocket.shutdownOutput();
 			        //clientSocket.shutdownInput();
 			        //clientSocket.close();
 				}
+				System.gc();
 				//}
 				// ***
 			}catch(IOException e){
@@ -151,7 +162,7 @@ public class Container implements ContainerBase {
 	}
 	
 	public static void main(String[] Args){
-		Container MyServletContainer = new Container(8025);
+		Container MyServletContainer = new Container(8090);
 		MyServletContainer.start();
 	}
 }
