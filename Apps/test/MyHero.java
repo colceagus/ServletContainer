@@ -14,7 +14,7 @@ import javax.servlet.http.HttpServletResponse;
 @WebServlet(description = "Testing serlvet 4 new implementation of servletContainer", urlPatterns = { "/MyHero" })
 public class MyHero extends HttpServlet {
 	private static final long serialVersionUID = 1L;
-
+	private PrintWriter out = null;
 	/**
 	 * Default constructor.
 	 */
@@ -29,7 +29,8 @@ public class MyHero extends HttpServlet {
 	protected void doGet(HttpServletRequest request,
 			HttpServletResponse response) throws ServletException, IOException {
 		// TODO Auto-generated method stub
-		PrintWriter out = response.getWriter();
+		out = response.getWriter();
+		
 		out.println("I am the first Servlet!GET METHOD!");
 		out.flush();
 		out.close();
@@ -42,6 +43,16 @@ public class MyHero extends HttpServlet {
 	protected void doPost(HttpServletRequest request,
 			HttpServletResponse response) throws ServletException, IOException {
 		// TODO Auto-generated method stub
+		out = response.getWriter();
+		out.println("POST METHOD! username: "+ request.getParameter("username") + "password: " + request.getParameter("password"));
+		
+		
+		out.flush();
+		out.close();
 	}
-
+	@Override
+	public void destroy(){
+		out.close();
+		System.gc();
+	}
 }

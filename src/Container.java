@@ -1,22 +1,34 @@
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
+
 import java.io.OutputStream;
 import java.net.InetAddress;
+import java.net.MalformedURLException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.util.ArrayList;
+import java.util.HashMap;
+import javax.servlet.http.HttpServlet;
+
+import com.ApplicationModel;
+
+
 
 public class Container implements ContainerBase {
 	
 	public static String AppPath = System.getProperty("user.dir") + File.separator + "Apps"; // Get user working directory + Resources folder
 	private static final int maxConnections = 10;
+	public static HttpServlet[] classInstance ;
+	public static ArrayList<HashMap<String, String>> servletConfigs;
+	
 	private clientThread threads[] = new clientThread[maxConnections];
 	
 	private ServerSocket MyServer;
 	private Socket clientSocket;
 	private int PortNumber = 8025;
 	private boolean shutdown = false;
-	
 	
 	public Container (int port){
 		this.PortNumber = port;
@@ -58,6 +70,78 @@ public class Container implements ContainerBase {
 			System.out.println(e);
 		}
 		
+		// load the classes and hold them in a global servlet/class instance holder
+		// get folder path: Apps/WEB-INF/
+		// goto /lib and load all .jar files. 
+		
+		String pathToLoad = ".\\Apps";
+		
+		
+		// read the web.xml file
+		
+		File appFolder = new File(ApplicationModel.APPLICATIONS_PATH);
+		LOADER.load(ApplicationModel.WEB_XML_PATH);
+		
+		//FileFilter fileFilter = new FileFilter();
+		//fileFilter.accept(arg0, arg1)
+		
+		// get the jars from ./Apps/WEB-INF/lib
+		
+		File[] fileList = appFolder.listFiles();
+		ArrayList<File> tempFileList = new ArrayList<File>();
+		
+		for (int i=0; i < fileList.length; i ++){
+			if (fileList[i].getPath().endsWith(".jar"))
+				tempFileList.add(fileList[i]);
+		}
+		
+		int len = tempFileList.size();
+		URL[] jarURLList = new URL[len];
+		
+		for (int i = 0; i < len; i++){
+			try { 
+				jarURLList[i] = tempFileList.get(i).toURI().toURL();
+			}catch(MalformedURLException e){
+				System.out.println(e.getMessage());
+			}
+		}
+			
+			
+		System.out.println(jarURLList.length+ " " + fileList.length);
+		
+		// got the jars. load the jelly
+		
+		URLClassLoader loader = new URLClassLoader(jarURLList);
+		
+		
+		// read Configurations for Servlet loading, including Class names, then load
+		classInstance = new HttpServlet[servletConfigs.size()];
+		
+		int nrOfServlets = 0;
+		for (HashMap<String,String> config : servletConfigs){
+			if (config.get("load-on-startup") != null){
+				// get class name and load it from jar
+				String servletClassName = config.get("class");
+				// what happens when the class that is trying to load does not exist?
+				try {
+					Class theClass = loader.loadClass(servletClassName);//url.substring(url.lastIndexOf("/") + 1,url.lastIndexOf(".")));
+					// get the servlet instance and hold it in classInstance vector
+					classInstance[nrOfServlets++] = (HttpServlet) theClass.newInstance();
+				}catch(ClassNotFoundException e ){
+					System.out.println(e.toString());
+				}catch (InstantiationException e ){
+					System.out.println(e.getLocalizedMessage());
+				}catch(IllegalAccessException e){
+					System.out.println(e.getMessage());
+				}catch ( Exception ex){
+					System.out.println("Class "+servletClassName+" failed to load");
+				}
+				
+				// corelation between class Instance and servlet Class: 
+				System.out.println(servletClassName);
+				System.out.println(classInstance[nrOfServlets-1].getClass().toString());
+			}
+		}
 		
 		while (!shutdown){
 			clientSocket = null;
@@ -66,7 +150,6 @@ public class Container implements ContainerBase {
 			int i = 0;
 			try {
 				// listen for a connection
-				
 				clientSocket = MyServer.accept(); 			
 				// Start in a separate thread the current request
 				synchronized(this){
@@ -76,6 +159,7 @@ public class Container implements ContainerBase {
 							break;
 						}
 				}
+				
 				//synchronized(this){
 				if (i == maxConnections) { 
 					// show 503 Service Unavailable; provide Retry-After

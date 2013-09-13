@@ -6,6 +6,7 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.UnsupportedEncodingException;
 import java.net.URL;
+import java.nio.CharBuffer;
 import java.security.Principal;
 import java.util.Collection;
 import java.util.Enumeration;
@@ -21,6 +22,7 @@ import javax.servlet.ServletInputStream;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
@@ -29,11 +31,13 @@ import javax.servlet.http.Part;
 
 public class Request implements RequestBase, ServletRequest, HttpServletRequest{
 	private InputStream input;
+	private BufferedReader reader = null; 
 	private String uri = null;
 	private String httpMethod; // GET, POST
 	
 	public Request(InputStream input){
 		this.input = input;
+		this.reader = new BufferedReader(new InputStreamReader(input));
 	}
 	
 	@Override
@@ -44,10 +48,16 @@ public class Request implements RequestBase, ServletRequest, HttpServletRequest{
 		//StringBuffer request = new StringBuffer(2048); // Read into a StringBuffer for request retrieval
 		//byte[] buffer = new byte[2048]; // The buffer is read and then appended to the StringBuffer for recompletion of the hole request string
 		//int index = -1; // the buffer index: until where it was written when the read method was appealed
+		char[] bf = new char[2048];
 		
 		String req = null; // the request line
 		try {
 			req = in.readLine();
+			//index = in.read(bf);
+			//System.out.println(bf.toString());
+			//String param = in.read(bf);
+			
+			//System.out.println(param);
 			
 			if (req != null){
 				System.out.println(req);
@@ -55,7 +65,6 @@ public class Request implements RequestBase, ServletRequest, HttpServletRequest{
 				System.out.println("Empty Request");
 			}
 			
-		
 			// the index returns the position at which the stream has read 
 			// index = input.read(buffer);
 		}catch(IOException e){
@@ -151,13 +160,13 @@ public class Request implements RequestBase, ServletRequest, HttpServletRequest{
 
 	@Override
 	public String getLocalAddr() {
-		// TODO Auto-generated method stub
+
 		return null;
 	}
 
 	@Override
 	public String getLocalName() {
-		// TODO Auto-generated method stub
+
 		return null;
 	}
 
@@ -176,12 +185,14 @@ public class Request implements RequestBase, ServletRequest, HttpServletRequest{
 	@Override
 	public Enumeration<Locale> getLocales() {
 		// TODO Auto-generated method stub
+		
 		return null;
 	}
-
+ 
 	@Override
 	public String getParameter(String arg0) {
 		// TODO Auto-generated method stub
+		
 		return null;
 	}
 
@@ -212,7 +223,8 @@ public class Request implements RequestBase, ServletRequest, HttpServletRequest{
 	@Override
 	public BufferedReader getReader() throws IOException {
 		// TODO Auto-generated method stub
-		return new BufferedReader(new InputStreamReader(input));
+		return reader;
+		//return new BufferedReader(new InputStreamReader(input));
 	}
 
 	@Override
